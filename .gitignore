@@ -1,0 +1,2 @@
+#ignore all in data folder, as this is where we will store our data and we don't want to accidentally commit it to git
+data/*
