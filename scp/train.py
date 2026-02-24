@@ -2,7 +2,7 @@ import torch
 
 from tqdm import tqdm
 
-from . import utils
+import utils
 
 
 def train_model(model, train_dataloader, epochs=1, val_dataloader=None, device=None):

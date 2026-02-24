@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from . import dataloader
-from . import model
-from . import train
-from . import utils
-
+import dataloader
+import model
+import train
+import utils
+from BO import skopt_BO
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train VGG16 on Imagenette.")
@@ -36,6 +36,9 @@ def seed_everything(seed):
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    seed_everything(args.seed)
+
+    BO_model = skopt_BO(model=model.VGG16(num_classes=args.num_classes, in_channels=3), min_kernel_number=1, max_kernel_number=64, min_dropout_rate=0.0, max_dropout_rate=1)
 
     train_set, validation_set, test_set = dataloader.get_dataset(
         args.dataset,
@@ -76,12 +79,14 @@ def main(args):
     val_histories = []
 
     for run_idx in range(args.runs):
-        seed_everything(args.seed + run_idx)
+
+        kernel_number, dropout = BO_model.suggest()
 
         cnn_model = model.VGG16(
             num_classes=args.num_classes,
             in_channels=in_channels,
-            features_fore_linear=features_fore_linear,
+            num_kernels=kernel_number,
+            dropout_rate=dropout,
             dataset=test_set,
         )
 

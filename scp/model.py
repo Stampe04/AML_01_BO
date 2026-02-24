@@ -4,7 +4,7 @@ import torch.nn as nn
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class VGG16(torch.nn.Module):
-    def __init__(self, num_classes, in_channels=1, features_fore_linear=25088, dataset=None):
+    def __init__(self, num_classes, num_kernels=64, dropout_rate=0.5, in_channels=1, dataset=None):
         super().__init__()
         
         # Helper hyperparameters to keep track of VGG16 architecture
@@ -12,40 +12,37 @@ class VGG16(torch.nn.Module):
         pool_stride = 2
         conv_kernel = 3
         pool_kernel = 2
-        dropout_probs = 0.5
-        optim_momentum = ...
-        weight_decay = ...
-        learning_rate = ...
-
+        dropout_probs = dropout_rate
+        
         # Define features and classifier each individually, this is how the VGG16-D model is orignally defined
         self.features = torch.nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=conv_kernel, padding=1, stride=conv_stride), # dim = in
+            nn.Conv2d(in_channels=in_channels, out_channels=num_kernels, kernel_size=conv_kernel, padding=1, stride=conv_stride), # dim = in
             nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
-
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.Conv2d(in_channels=num_kernels, out_channels=num_kernels, kernel_size=conv_kernel, padding=1, stride=conv_stride),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.Conv2d(in_channels=num_kernels, out_channels=num_kernels*2, kernel_size=conv_kernel, padding=1, stride=conv_stride),
             nn.ReLU(),
-            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
-
-            nn.Conv2d(in_channels=256, out_channels=512, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.Conv2d(in_channels=num_kernels*2, out_channels=num_kernels*2, kernel_size=conv_kernel, padding=1, stride=conv_stride),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.Conv2d(in_channels=num_kernels*2, out_channels=num_kernels*4, kernel_size=conv_kernel, padding=1, stride=conv_stride),
             nn.ReLU(),
-            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.Conv2d(in_channels=num_kernels*4, out_channels=num_kernels*4, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
+
+            nn.Conv2d(in_channels=num_kernels*4, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=num_kernels*8, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
+
+            nn.Conv2d(in_channels=num_kernels*8, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=num_kernels*8, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
@@ -54,7 +51,7 @@ class VGG16(torch.nn.Module):
         ).to(device)
         
         self.classifier = torch.nn.Sequential(
-            nn.Linear(in_features=features_fore_linear, out_features=4096),
+            nn.LazyLinear(out_features=4096),
             nn.ReLU(),
             nn.Dropout(dropout_probs),
             nn.Linear(in_features=4096, out_features=4096),
