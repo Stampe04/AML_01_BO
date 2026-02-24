@@ -104,6 +104,8 @@ def main(args):
         val_histories.append(val_accs)
         print(f"Run {run_idx + 1}/{args.runs} test accuracy: {test_acc}")
 
+        BO_model.update(kernel_number, dropout, test_acc)
+
     test_accs = np.array(test_accs, dtype=np.float32)
     mean_acc = float(test_accs.mean())
     std_acc = float(test_accs.std(ddof=1)) if len(test_accs) > 1 else 0.0

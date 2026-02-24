@@ -8,40 +8,44 @@ from skopt import gp_minimize
 
 max_kernel_number = 64
 
+from skopt.space import Integer, Real
+from skopt import Optimizer
+
 class skopt_BO:
-    "class that implements BO using skopt library, tuning the kernel number and dropout rate of our model"
-    def __init__(self, model, min_kernel_number=1, max_kernel_number=64, min_dropout_rate=0.0, max_dropout_rate=0.5):
+    def __init__(self, model,
+                 min_kernel_number=1, max_kernel_number=64,
+                 min_dropout_rate=0.0, max_dropout_rate=0.5):
+
         self.model = model
-        self.min_kernel_number = min_kernel_number
-        self.max_kernel_number = max_kernel_number
-        self.min_dropout_rate = min_dropout_rate
-        self.max_dropout_rate = max_dropout_rate
-    
-    def suggest(self):
-        "function that uses skopt to suggest the next hyperparameters to try"
-        # Define the search space for the hyperparameters
-        space = [
-            skopt.space.Integer(self.min_kernel_number, self.max_kernel_number, name='kernel_number'),
-            skopt.space.Real(self.min_dropout_rate, self.max_dropout_rate, name='dropout_rate')
+
+        # Define search space
+        self.space = [
+            Integer(min_kernel_number, max_kernel_number, name='kernel_number'),
+            Real(min_dropout_rate, max_dropout_rate, name='dropout_rate')
         ]
-        
-        # Define the objective function to minimize (negative validation accuracy)
-        def objective(params):
-            kernel_number, dropout_rate = params
-            # Here we would train our model with the given hyperparameters and return the negative validation accuracy
-            # For now, we will just return a random value as a placeholder
-            return np.random.rand()
-        
-        # Use gp_minimize to find the best hyperparameters
-        res = gp_minimize(objective, space, n_calls=10, random_state=0)
-        
-        return res.x  # Return the best hyperparameters found
-    
+
+        # Create Bayesian optimizer (Gaussian Process by default)
+        self.optimizer = Optimizer(
+            dimensions=self.space,
+            random_state=0
+        )
+
+    def suggest(self):
+        """
+        Ask the optimizer for the next hyperparameters to try
+        """
+        suggestion = self.optimizer.ask()
+        return suggestion  # [kernel_number, dropout_rate]
+
     def update(self, kernel_number, dropout_rate, accuracy):
-        "function to update the BO model with the new data point (kernel_number, dropout_rate, accuracy)"
-        # Here we would update our BO model with the new data point
-        self.X.append([kernel_number, dropout_rate])
-        self.y.append(accuracy)
+        """
+        Tell the optimizer the result of a tried configuration
+        NOTE: We minimize, so pass negative accuracy
+        """
+        self.optimizer.tell(
+            [kernel_number, dropout_rate],
+            -accuracy
+        )
 
 
 class BO:
