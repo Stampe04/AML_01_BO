@@ -2,6 +2,7 @@
 
 import numpy as np
 from scipy.stats import norm
+from scipy.spatial.distance import cdist
 
 max_kernel_number = 64
 
@@ -27,7 +28,9 @@ class BO:
 
     def BO_step(self, array):
         # Get the next hyperparameters to try
-        pass
+        acquisition_values1 = self.GP_UCB(self.X, self.y, array)
+        next_x1 = np.argmax(acquisition_values1)
+
 
     def prob_of_improvement(self, mean, std, current_best, xi=0.01):
         # Use y_pred and y_true to calculate the probability of improvement for the next suggestion
@@ -65,3 +68,35 @@ class BO:
         
         return UCB
         
+    def fit_predictive_GP(self, X, y, Xtest, lengthscale, kernel_variance, noise_variance):
+        '''
+        Function that fit the Gaussian Process. It returns the predictive mean function and
+        the predictive covariance function. It follows step by step the algorithm on the lecture
+        notes
+        '''
+        X = np.array(X).reshape(-1, 1)
+        y = np.array(y)
+        K = self.squared_exponential_kernel(X, X, lengthscale, kernel_variance)
+        L = np.linalg.cholesky(K + noise_variance * np.eye(len(X)))
+
+        # compute the mean at our test points.
+        Ks = self.squared_exponential_kernel(X, Xtest, lengthscale, kernel_variance)
+        alpha = np.linalg.solve(L.T, np.linalg.solve(L, y))  #
+        mu = Ks.T @ alpha
+
+        v = np.linalg.solve(L, Ks)
+        # compute the variance at our test points.
+        Kss = self.squared_exponential_kernel(Xtest, Xtest, lengthscale, kernel_variance)
+        covariance = Kss - (v.T @ v)
+        
+        return mu, covariance
+    
+    def squared_exponential_kernel(self, x, y, lengthscale, variance):
+        '''
+        Function that computes the covariance matrix using a squared-exponential kernel
+        '''
+        # pair-wise distances, size: NxM
+        sqdist = cdist(x.reshape((-1, 1)), y.reshape((-1, 1)), 'sqeuclidean')
+        # compute the kernel
+        cov_matrix = variance * np.exp(-0.5 * sqdist * (1/lengthscale**2))  # NxM
+        return cov_matrix
