@@ -38,7 +38,9 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seed_everything(args.seed)
 
-    BO_model = skopt_BO(model=model.VGG16(num_classes=args.num_classes, in_channels=3), min_kernel_number=1, max_kernel_number=64, min_dropout_rate=0.0, max_dropout_rate=1)
+    BO_model = skopt_BO(model=model.VGG16(num_classes=args.num_classes, in_channels=3), 
+                        min_kernel_number=1, max_kernel_number=64, min_dropout_rate=0.0, 
+                        max_dropout_rate=1, acquisition_function='EI')
 
     train_set, validation_set, test_set = dataloader.get_dataset(
         args.dataset,
@@ -67,12 +69,6 @@ def main(args):
     )
 
     in_channels = next(iter(train_dataloader))[0].shape[1]
-    in_width_height = next(iter(train_dataloader))[0].shape[-1]
-
-    temp_model = model.VGG16(num_classes=args.num_classes, in_channels=in_channels)
-    features_fore_linear = utils.get_dim_before_first_linear(
-        temp_model.features, in_width_height, in_channels
-    )
 
     test_accs = []
     train_histories = []

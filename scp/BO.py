@@ -14,7 +14,7 @@ from skopt import Optimizer
 class skopt_BO:
     def __init__(self, model,
                  min_kernel_number=1, max_kernel_number=64,
-                 min_dropout_rate=0.0, max_dropout_rate=0.5):
+                 min_dropout_rate=0.0, max_dropout_rate=0.5, acquisition_function='EI'):
 
         self.model = model
 
@@ -27,6 +27,8 @@ class skopt_BO:
         # Create Bayesian optimizer (Gaussian Process by default)
         self.optimizer = Optimizer(
             dimensions=self.space,
+            n_initial_points=5,
+            acq_func=acquisition_function,
             random_state=0
         )
 
