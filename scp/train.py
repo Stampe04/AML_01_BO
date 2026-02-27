@@ -16,13 +16,17 @@ def train_model(model, train_dataloader, epochs=1, val_dataloader=None, device=N
         except StopIteration:
             device = None
 
-    # To hold accuracy during training and testing
+    # To hold accuracy and loss during training and testing
     train_accs = []
     test_accs = []
+    train_losses = []
+    val_losses = []
 
     for epoch in range(epochs):
 
         epoch_acc = 0
+        epoch_loss = 0
+        num_batches = 0
 
         for inputs, targets in tqdm(train_dataloader):
             if device is not None:
@@ -36,10 +40,13 @@ def train_model(model, train_dataloader, epochs=1, val_dataloader=None, device=N
             model.optim.step()
             model.optim.zero_grad()
 
-            # Keep track of training accuracy
+            # Keep track of training accuracy and loss
             epoch_acc += (torch.argmax(logits, dim=1) == targets).sum().item()
+            epoch_loss += loss.item()
+            num_batches += 1
 
         train_accs.append(epoch_acc / len(train_dataloader.dataset))
+        train_losses.append(epoch_loss / num_batches)
 
         # If val_dataloader, evaluate after each epoch
         if val_dataloader is not None:
@@ -47,8 +54,10 @@ def train_model(model, train_dataloader, epochs=1, val_dataloader=None, device=N
             model.eval()
             acc = utils.eval_model(model, val_dataloader, device=device)
             test_accs.append(acc)
-            print(f"Epoch {epoch} validation accuracy: {acc}")
+            val_loss = utils.eval_loss(model, val_dataloader, device=device)
+            val_losses.append(val_loss)
+            
             # turn on dropout after being done
             model.train()
 
-    return train_accs, test_accs
+    return train_accs, test_accs, train_losses, val_losses

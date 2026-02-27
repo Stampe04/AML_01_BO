@@ -1,0 +1,19 @@
+#BSUB -J Main_PI
+#BSUB -o Main_PI%J.out
+#BSUB -e Main_PI%J.err
+#BSUB -n 4
+#BSUB -q gpua100
+#BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -R "rusage[mem=1100]"
+#BSUB -R "span[hosts=1]"
+#BSUB -W 08:00
+# end of BSUB options
+
+#!/bin/bash
+
+cd "$LS_SUBCWD" || exit 1
+module load python3/3.10.18
+source .venv/bin/activate
+export OMP_NUM_THREADS=4
+export MKL_NUM_THREADS=4
+python3 main.py

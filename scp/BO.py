@@ -13,8 +13,8 @@ from skopt import Optimizer
 
 class skopt_BO:
     def __init__(self, model,
-                 min_kernel_number=1, max_kernel_number=64,
-                 min_dropout_rate=0.0, max_dropout_rate=0.5, acquisition_function='EI'):
+                 min_kernel_number=16, max_kernel_number=64,
+                 min_dropout_rate=0.0, max_dropout_rate=0.7, acquisition_function='EI'):
 
         self.model = model
 

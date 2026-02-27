@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.optim.lr_scheduler as lr_scheduler
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -28,36 +29,20 @@ class VGG16(torch.nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
-            nn.Conv2d(in_channels=num_kernels*2, out_channels=num_kernels*4, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=num_kernels*4, out_channels=num_kernels*4, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
-            nn.Conv2d(in_channels=num_kernels*4, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=num_kernels*8, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
-
-            nn.Conv2d(in_channels=num_kernels*8, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=num_kernels*8, out_channels=num_kernels*8, kernel_size=conv_kernel, padding=1, stride=conv_stride),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
 
             nn.Flatten(),
         ).to(device)
         
         self.classifier = torch.nn.Sequential(
-            nn.LazyLinear(out_features=4096),
+            nn.LazyLinear(out_features=600),
             nn.ReLU(),
             nn.Dropout(dropout_probs),
-            nn.Linear(in_features=4096, out_features=4096),
+            nn.Linear(in_features=600, out_features=120),
             nn.ReLU(),
             nn.Dropout(dropout_probs),
-            nn.Linear(in_features=4096, out_features=num_classes),
+            nn.Linear(in_features=120, out_features=num_classes),
 
         ).to(device)
         
@@ -66,8 +51,11 @@ class VGG16(torch.nn.Module):
         self.criterion = nn.CrossEntropyLoss()
 
         # Optimizer - For now just set to Adam to test the implementation
-        self.optim = torch.optim.Adam(list(self.features.parameters()) + list(self.classifier.parameters()), lr=0.001)
+        self.optim = torch.optim.Adam(list(self.features.parameters()) + list(self.classifier.parameters()), lr=0.01, weight_decay=1e-4)
         # self.optim = torch.optim.SGD(list(self.features.parameters()) + list(self.classifier.parameters()), lr=learning_rate, momentum=optim_momentum, weight_decay=weight_decay)
+
+        # learning rate scheduler:
+        self.scheduler = lr_scheduler.StepLR(self.optim, step_size=10, gamma=0.1)
 
         self.dataset = dataset
 

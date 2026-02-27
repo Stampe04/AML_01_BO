@@ -29,6 +29,35 @@ def eval_model(model, test_dataloader, device=None):
     return total_acc
 
 
+def eval_loss(model, dataloader, device=None):
+    was_training = model.training
+    model.eval()
+
+    if device is None:
+        try:
+            device = next(model.parameters()).device
+        except StopIteration:
+            device = None
+
+    total_loss = 0.0
+    num_batches = 0
+    with torch.no_grad():
+        for inputs, targets in dataloader:
+            if device is not None:
+                inputs = inputs.to(device)
+                targets = targets.to(device)
+
+            logits = model(inputs)
+            loss = model.criterion(logits, targets)
+            total_loss += loss.item()
+            num_batches += 1
+
+    if was_training:
+        model.train()
+
+    return total_loss / num_batches if num_batches > 0 else 0.0
+
+
 def get_dim_before_first_linear(features, in_width_height, in_channels, device=None, brain=False):
     if device is None:
         try:
