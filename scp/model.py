@@ -30,8 +30,6 @@ class VGG16(torch.nn.Module):
             nn.MaxPool2d(kernel_size=pool_kernel, stride= pool_stride),
 
 
-
-
             nn.Flatten(),
         ).to(device)
         
@@ -51,7 +49,11 @@ class VGG16(torch.nn.Module):
         self.criterion = nn.CrossEntropyLoss()
 
         # Optimizer - For now just set to Adam to test the implementation
-        self.optim = torch.optim.Adam(list(self.features.parameters()) + list(self.classifier.parameters()), lr=0.01, weight_decay=1e-4)
+        self.optim = torch.optim.Adam(
+            list(self.features.parameters()) + list(self.classifier.parameters()),
+            lr=1e-3,
+            weight_decay=1e-4,
+        )
         # self.optim = torch.optim.SGD(list(self.features.parameters()) + list(self.classifier.parameters()), lr=learning_rate, momentum=optim_momentum, weight_decay=weight_decay)
 
         # learning rate scheduler:

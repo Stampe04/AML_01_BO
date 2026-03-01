@@ -1,8 +1,8 @@
-#BSUB -J Main_PI
-#BSUB -o Main_PI%J.out
-#BSUB -e Main_PI%J.err
+#BSUB -J Main_LCB
+#BSUB -o Main_LCB%J.out
+#BSUB -e Main_LCB%J.err
 #BSUB -n 4
-#BSUB -q gpua100
+#BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -R "rusage[mem=1100]"
 #BSUB -R "span[hosts=1]"

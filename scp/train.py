@@ -59,5 +59,10 @@ def train_model(model, train_dataloader, epochs=1, val_dataloader=None, device=N
             
             # turn on dropout after being done
             model.train()
+            print(f"Epoch {epoch + 1}/{epochs} - Train acc: {train_accs[-1]:.4f}, Val acc: {acc:.4f}, Train loss: {train_losses[-1]:.4f}, Val loss: {val_loss:.4f}")
+
+        if hasattr(model, "scheduler") and model.scheduler is not None:
+            model.scheduler.step()
+
 
     return train_accs, test_accs, train_losses, val_losses

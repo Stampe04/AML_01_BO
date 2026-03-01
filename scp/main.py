@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument("--runs", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--ci", type=float, default=0.95)
-    parser.add_argument("--acquisition-function", default="PI", help="Acquisition function for BO (e.g., EI, PI, LCB)")
+    parser.add_argument("--acquisition-function", default="LCB", help="Acquisition function for BO (e.g., EI, PI, LCB)")
     parser.add_argument("--plot-path", default="test_accuracy_runs.png")
     return parser.parse_args()
 
@@ -39,9 +39,14 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     seed_everything(args.seed)
 
-    BO_model = skopt_BO(model=model.VGG16(num_classes=args.num_classes, in_channels=3), 
-                        min_kernel_number=16, max_kernel_number=64, min_dropout_rate=0.0, 
-                        max_dropout_rate=0.8, acquisition_function=args.acquisition_function)
+    BO_model = skopt_BO(
+        model=model.VGG16(num_classes=args.num_classes, in_channels=3),
+        min_kernel_number=16,
+        max_kernel_number=64,
+        min_dropout_rate=0.0,
+        max_dropout_rate=0.3,
+        acquisition_function=args.acquisition_function,
+    )
     
     # Update plot paths to include acquisition function
     acq_func = args.acquisition_function
